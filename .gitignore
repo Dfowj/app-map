@@ -1,0 +1,11 @@
+# Rendered map output is build output — records are the source of truth.
+**/app-map/rendered/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.tool-venv/
+
+# macOS
+.DS_Store

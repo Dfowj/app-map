@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# app-map — front door for the App Map tool.
+#
+# Preflights dependencies (python3 + pyyaml), bootstrapping a local .venv on
+# first run, then dispatches to the Python engine (`python -m appmap`). Copy the
+# whole tool folder into any project and run this; nothing else to install.
+#
+# This wrapper is the single entry the (future) commit hook also calls.
+set -euo pipefail
+
+# ── resolve this script's real directory (follow symlinks, macOS-safe) ───────
+src="${BASH_SOURCE[0]}"
+while [ -h "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  [[ $src != /* ]] && src="$dir/$src"
+done
+TOOL_DIR="$(cd -P "$(dirname "$src")" && pwd)"
+VENV_DIR="$TOOL_DIR/.tool-venv"
+VENV_PY="$VENV_DIR/bin/python"
+
+warn() { printf '%s\n' "$*" >&2; }
+
+has_yaml() { "$1" -c 'import yaml' >/dev/null 2>&1; }
+
+# ── find a base python3 ──────────────────────────────────────────────────────
+BASE_PY=""
+for cand in python3 python; do
+  if command -v "$cand" >/dev/null 2>&1; then BASE_PY="$(command -v "$cand")"; break; fi
+done
+if [ -z "$BASE_PY" ]; then
+  warn "app-map: python3 not found on PATH."
+  warn "  Install Python 3 (e.g. 'brew install python') and re-run."
+  exit 1
+fi
+
+# ── choose an interpreter that can import pyyaml ─────────────────────────────
+PY=""
+if [ -x "$VENV_PY" ] && has_yaml "$VENV_PY"; then
+  PY="$VENV_PY"
+elif has_yaml "$BASE_PY"; then
+  PY="$BASE_PY"
+else
+  # Bootstrap a local venv once. Requires network for the first pip install.
+  warn "app-map: setting up dependencies (pyyaml) in $VENV_DIR ..."
+  if "$BASE_PY" -m venv "$VENV_DIR" >/dev/null 2>&1 \
+     && "$VENV_PY" -m pip install --quiet --disable-pip-version-check pyyaml >/dev/null 2>&1 \
+     && has_yaml "$VENV_PY"; then
+    PY="$VENV_PY"
+  else
+    warn "app-map: could not auto-install pyyaml (offline? no pip?)."
+    warn "  Fix with either:"
+    warn "    $BASE_PY -m pip install pyyaml"
+    warn "    # or: $BASE_PY -m venv \"$VENV_DIR\" && \"$VENV_PY\" -m pip install pyyaml"
+    exit 1
+  fi
+fi
+
+exec env PYTHONPATH="$TOOL_DIR${PYTHONPATH:+:$PYTHONPATH}" "$PY" -m appmap "$@"

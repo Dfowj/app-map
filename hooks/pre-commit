@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# pre-commit — STUB (handoff §7B). Not wired up yet.
+#
+# Planned behavior (deterministic detection, agentic resolution deferred):
+#   On a commit touching app-map/** or a surface's code_anchor.file:
+#     1. Re-stamp last_verified (SHA + date) for changed records.        [free]
+#     2. If a surface's SOURCE changed but its RECORD didn't ->
+#        set needs_review: true and print a visible warning naming it.
+#     3. Patch the manifest index for changed surfaces.
+#     4. exit 0 UNCONDITIONALLY. Never blocks a commit.
+#
+# It will call the shared front door (../app-map) rather than the engine
+# directly, so dependency preflight stays in one place.
+#
+# To install once implemented:
+#   ln -sf ../../hooks/pre-commit .git/hooks/pre-commit   # (path-adjust per project)
+
+echo "app-map pre-commit hook is not implemented yet (stub). See hooks/pre-commit." >&2
+exit 0

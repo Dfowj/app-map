@@ -1,0 +1,11 @@
+# app-map.config.yaml — shopmini. Committed, hand-authored.
+
+launch_surface: tab-bar
+
+source_globs:
+  - "Sources/**/*.swift"
+
+# No snapshot-test suite yet; state screenshots resolve to warnings until one exists.
+screenshot_dirs: []
+
+ignore: []

@@ -1,0 +1,19 @@
+# app-map.config.yaml — hand-authored tool config (tier-3-ish). Committed.
+
+# The app-graph ROOT: the surface id the app launches into. Reachability and the
+# rendered index key off this. Set it to your tab-bar / root screen id.
+launch_surface: null
+
+# Globs (relative to this project root, the parent of app-map/) that bound where
+# code_anchor.file may point. Used by the future hook to know which source
+# changes matter.
+source_globs:
+  - "Sources/**/*.swift"
+
+# Directories (relative to project root) to search when resolving a state's
+# `screenshot:` path, in addition to the surface's own folder. Point these at
+# your snapshot-test output once that exists.
+screenshot_dirs: []
+
+# Paths/globs to ignore.
+ignore: []
