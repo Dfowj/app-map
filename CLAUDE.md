@@ -27,6 +27,16 @@ cd samples/shopmini
 open app-map/rendered/index.html
 ```
 
+## Testing
+
+```sh
+python -m unittest discover -s tests -v   # from repo root; appmap is importable there
+```
+
+If the system `python3` lacks `pyyaml`, use the provisioned `.tool-venv/bin/python` (created by `./app-map` on first run) instead.
+
+Claude owns the dev → test → verify loop on this tool: edit → run the unit tests above → sanity-run `samples/shopmini` (`cd samples/shopmini && ../../app-map validate && ../../app-map render`) — before considering a change to `appmap/` done.
+
 ## Status / roadmap
 
 Built: deterministic core (schema, model, backlinks, broken-link + stale-anchor checks, manifest, HTML render, shell wrapper). See README "Roadmap" for what's deferred (commit hook, agent skill, reachability analysis, incremental render, screenshot wiring). `samples/shopmini` is a real SwiftUI app to be fleshed out and used for an actual agent/skill run — spec in [`plans/shopmini-sample.md`](plans/shopmini-sample.md).
