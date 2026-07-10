@@ -1,183 +1,209 @@
-# App Map — Tier 1 behavior (light PRD)
+# App Map PRD
 
-This document specifies the **Tier 1** layer of the App Map tool: the mechanical,
-script-owned behavior. It's written to be read top-down — start with what the
-tool is, then the mental model, then each capability. Every acceptance criterion
-is tagged `[IMPLEMENTED]` (there's code and it does this today) or `[PLANNED]`
-(intended, not built yet), with a pointer to the source.
+Requirement documentation for App Map, a tool for mapping an app's surfaces and their connections.
 
-Related docs: [`CLAUDE.md`](CLAUDE.md) (invariants + conventions),
-[`plans/app-map-tooling.md`](plans/app-map-tooling.md) (full design).
+Requirements are tagged `[IMPLEMENTED]` (built and doing this today) or `[PLANNED]`
+(intended, not built yet).
+
+## Table of Contents
+
+- [What is the App Map?](#what-is-the-app-map)
+  - [Tell the story of how the App Map works](#tell-the-story-of-how-the-app-map-works)
+  - [Agent Skill encodes surface data into records following the schema](#agent-skill-encodes-surface-data-into-records-following-the-schema)
+  - [Renderer computes throwaway html for use by humans](#renderer-computes-throwaway-html-for-use-by-humans)
+  - [Scripts/Hooks maintain the records deterministically](#scriptshooks-maintain-the-records-deterministically)
+- [Requirements](#requirements)
+  - [Skill](#skill)
+  - [Renderer](#renderer)
+  - [Scripts](#scripts)
 
 ---
 
-## 1. What the App Map is
+## What is the App Map?
 
-The App Map is a **map-as-projection** of an app's surfaces (screens, sheets,
-tabs, modals, …), refreshed *from* the code. It describes *what is*, never intent
-— no todos, specs, or wishlists live in it.
+### Tell the story of how the App Map works
 
-- **Records are the source of truth.** Each surface is a folder
-  `app-map/surfaces/<id>/surface.md`: YAML frontmatter + a markdown body. These
-  records (plus config, schema, and the derived `manifest.yaml`) are what gets
-  committed.
-- **`rendered/` is throwaway build output.** The browsable HTML is regenerated
-  on demand and is gitignored; commit diffs stay meaningful because only records
-  and the (stable) manifest are tracked.
-- **Operating philosophy: warn, record, never block.** No tool action may gate a
-  commit, push, or deploy. Every command exits 0; only CLI misuse (bad args, no
-  map found) returns non-zero. `[IMPLEMENTED]`
-  [`appmap/__init__.py`](appmap/__init__.py), [`appmap/cli.py`](appmap/cli.py)
+The App Map is a map of an app's surfaces — its screens, sheets, tabs, modals, and
+the navigation between them — kept as a set of small records that live beside the
+code and are refreshed from it. It's a projection: it describes what the app *is*,
+not what anyone wants it to become, so it never holds todos, specs, or wishlists.
 
-## 2. The three ownership tiers
+The map stays current through a loop with three actors:
 
-Every field in a record has exactly one owner. This is the model that makes every
-rule below make sense:
+- An **agent Skill** reads the code and writes what it finds into surface records.
+- **Scripts and hooks** keep the mechanical parts of those records honest,
+  deterministically, every time they change.
+- A **renderer** turns the records into throwaway HTML a human can browse.
 
-- **Tier 1 — mechanical, script-owned.** Derived/computed; **always
-  overwritten** on recompute. (This document.)
-- **Tier 2 — agent-asserted, code-grounded.** Written by the agent, validated
-  against code, reconciled on change.
-- **Tier 3 — human-authored.** The surface `id`, the markdown body prose, and
-  `note:` annotations. **Preserved always** — the agent may suggest, never
+The records are the source of truth — they're what gets committed. The rendered
+HTML is build output: regenerated on demand, gitignored, never the thing you edit.
+
+What keeps three different authors from stepping on each other is a strict
+ownership model. Every field in a record has exactly one owner:
+
+- **Tier 1 — mechanical.** Derived by scripts and always overwritten — backlinks,
+  the manifest, validation state, the verification stamps.
+- **Tier 2 — asserted.** Written by the agent Skill, grounded in code, reconciled
+  when the code changes — `title`, `kind`, `code_anchor`, `edges`, and the like.
+- **Tier 3 — authored.** Written by a human — the surface `id`, the body prose,
+  and any `note` annotations. Preserved always; the agent may suggest, never
   overwrite.
 
-The Tier 1 scripts must never damage Tier 2 or Tier 3 material. The load-bearing
-enforcement is in §3.
+One rule sits above all the tooling: **warn, record, never block.** Nothing the
+App Map does may gate a commit, push, or deploy. Every command exits 0; problems
+are reported for attention, never enforced.
 
-Per-field tier ownership is documented inline in
-[`appmap/schema/surface.schema.json`](appmap/schema/surface.schema.json) and the
-scaffold [`appmap/templates/surface.md`](appmap/templates/surface.md).
+### Agent Skill encodes surface data into records following the schema
 
-## 3. Safe record handling
+The Skill is the agent side of the loop. Pointed at the app's code, it identifies
+surfaces and encodes them as records under `app-map/surfaces/<id>/surface.md`,
+filling in the Tier-2 fields it can ground in code — the surface's title and kind,
+its `code_anchor`, outgoing edges, entry points, states, and dependencies — all
+shaped by `surface.schema.json`. Where prose would help it may suggest Tier-3
+notes, but it never rewrites what a human wrote. As the code drifts, the Skill's
+job is to reconcile its Tier-2 assertions and work down the review queue. This
+actor is largely not built yet.
 
-**Purpose:** the tool reads and rewrites surface records without ever damaging
-the human's prose.
+### Renderer computes throwaway html for use by humans
 
-- When a record is parsed and re-serialized, the YAML frontmatter is split from
-  the markdown body and the **body round-trips byte-for-byte** — compute never
-  rewrites prose as a side effect. `[IMPLEMENTED]`
-  [`appmap/model.py:72`](appmap/model.py) (`dumps`),
-  [`appmap/model.py:85`](appmap/model.py) (`parse_surface`)
-- A file with no frontmatter is tolerated: `data` comes back empty and the whole
-  text is kept as the body. `[IMPLEMENTED]` [`appmap/model.py:91`](appmap/model.py)
-- `---` fence sequences appearing inside the body survive the round-trip (the
-  split only consumes the first two fences). `[IMPLEMENTED]`
-  [`appmap/model.py:94`](appmap/model.py)
-- Records load in a stable order (sorted by `id`) so downstream output is
-  deterministic. `[IMPLEMENTED]` [`appmap/model.py:104`](appmap/model.py)
-  (`load_surfaces`)
-- Missing fields fall back to sane defaults when read: `id` → the surface's
-  folder name, `kind` → `"screen"`, list/dict fields → empty. `[IMPLEMENTED]`
-  [`appmap/model.py:32`](appmap/model.py)
+The renderer turns the records into a small static site — an index of every
+surface plus one page each — so a person can browse the map without reading YAML.
+Each surface page shows where it navigates to, what navigates to it (derived), and
+the human's notes. The output is throwaway: written to `app-map/rendered/`,
+gitignored, and rebuilt from the records whenever you run `render`.
 
-## 4. Understanding how surfaces connect
+### Scripts/Hooks maintain the records deterministically
 
-**Purpose:** the tool derives the navigation graph from each surface's *outgoing*
-edges, so the map can show both directions and catch broken links. (Only outgoing
-edges are authored; incoming links are always derived.)
+The scripts are the mechanical spine. They own every Tier-1 detail and recompute
+it from scratch, deterministically, so those parts of a record are never
+hand-maintained and never drift. They parse and rewrite records without touching
+prose, invert edges into backlinks, rebuild the manifest index, and validate the
+map — warning about broken links, stale code anchors, and missing screenshots
+without ever blocking. A planned commit hook extends this to stamping each changed
+record's `last_verified` and flagging records whose source moved out from under
+them.
 
-- Every outgoing `edge.to` is inverted into an **incoming backlink** on the
-  target surface. `[IMPLEMENTED]` [`appmap/links.py:44`](appmap/links.py)
-  (`build_links`)
-- An `edge.to`, a `contains` child, or an `entry_point.to` that names a
-  surface with no record is recorded as a **dangling link**, tagged with its kind
-  (`edge` / `contains` / `entry_point`). `[IMPLEMENTED]`
-  [`appmap/links.py:49`](appmap/links.py)
-- An edge with no `to` value is skipped, not flagged as dangling. `[IMPLEMENTED]`
-  [`appmap/links.py:52`](appmap/links.py)
+---
+
+## Requirements
+
+### Skill
+
+The agent that reads code and encodes surfaces as records. Largely unbuilt today;
+the schema and records it targets exist, but the Skill itself is deferred
+(`skill/SKILL.md`).
+
+- Identifies an app's surfaces from its code and writes one record per surface
+  under `app-map/surfaces/<id>/surface.md`. `[PLANNED]`
+- Asserts the Tier-2 fields it can ground in code — `title`, `kind`,
+  `code_anchor`, `edges`, `entry_points`, `states`, `dependencies` — conforming
+  to `surface.schema.json`. `[PLANNED]`
+- May suggest Tier-3 prose (`note` annotations, body text) but never overwrites
+  human-authored content. `[PLANNED]`
+- Reconciles its Tier-2 assertions when the underlying code changes, and works
+  down the review queue, clearing `needs_review` once a record is confirmed.
+  `[PLANNED]`
+
+### Renderer
+
+Turns records into browsable, throwaway HTML. Built today.
+
+- `render` writes an index page — searchable, with review-queue and broken-link
+  banners — plus one HTML page per surface. `[IMPLEMENTED]`
+- Each surface page shows its outgoing edges, its derived incoming backlinks, and
+  the body prose (rendered through a small markdown subset). `[IMPLEMENTED]`
+- A state's screenshot is inlined when the image resolves; otherwise the page
+  notes it as unresolved. `[IMPLEMENTED]`
+- Output lands in `app-map/rendered/`, which is gitignored — only records and the
+  manifest are committed. `[IMPLEMENTED]`
+
+### Scripts
+
+The deterministic Tier-1 layer. This is the built core of the tool.
+
+**Reading and rewriting records safely**
+
+- Frontmatter is split from the markdown body and the body round-trips
+  byte-for-byte, so rewriting mechanical fields never disturbs human prose.
+  `[IMPLEMENTED]`
+- A file with no frontmatter is tolerated: empty data, whole text kept as the
+  body. `[IMPLEMENTED]`
+- `---` fence sequences inside the body survive the round-trip. `[IMPLEMENTED]`
+- Records load sorted by `id`, so downstream output is deterministic.
+  `[IMPLEMENTED]`
+- Missing fields read back as sane defaults: `id` → the folder name, `kind` →
+  `"screen"`, list/dict fields → empty. `[IMPLEMENTED]`
+
+**Deriving the navigation graph**
+
+- Each outgoing `edge.to` is inverted into an incoming backlink on its target
+  surface. `[IMPLEMENTED]`
+- An `edge.to`, a `contains` child, or an `entry_point.to` naming a surface with
+  no record is recorded as a dangling link, tagged with its kind. `[IMPLEMENTED]`
+- An edge with no `to` value is skipped, not flagged. `[IMPLEMENTED]`
 - A fully valid graph (every target exists) yields zero dangling links.
   `[IMPLEMENTED]`
-- No reachability / orphan / dead-end analysis is done here — that's deferred.
-  `[PLANNED]` [`appmap/links.py:9`](appmap/links.py)
+- Reachability / orphan / dead-end analysis is out of scope for now. `[PLANNED]`
 
-## 5. The front-door index (manifest)
+**Building the manifest index**
 
-**Purpose:** `render` rebuilds `app-map/manifest.yaml` wholesale as a stable,
-fully-derived index of the map — safe to regenerate at any time.
-
-- The surface index lists, per id (id-sorted): `title`, `kind`, `path`,
+- `render` rebuilds `app-map/manifest.yaml` wholesale as a fully-derived index,
+  safe to regenerate at any time. `[IMPLEMENTED]`
+- The index lists, per surface (id-sorted): `title`, `kind`, `path`,
   `last_verified.sha`, and `needs_review`. `[IMPLEMENTED]`
-  [`appmap/manifest.py:28`](appmap/manifest.py)
-- `review_queue` is projected from each surface's `needs_review` flag (sorted).
-  `[IMPLEMENTED]` [`appmap/manifest.py`](appmap/manifest.py)
-- `link_health.dangling_links` carries the broken links found in §4.
+- `review_queue` is projected from each surface's `needs_review` flag.
   `[IMPLEMENTED]`
-- `launch_surface` is passed through from config. `[IMPLEMENTED]`
-- The manifest carries **no volatile fields** — no wall-clock timestamp, no git
-  sha — so a re-render on unchanged records produces a **byte-identical** file
-  and committing it creates no churn. `[IMPLEMENTED]`
-  [`appmap/manifest.py:1`](appmap/manifest.py)
+- `link_health.dangling_links` carries the broken links found above.
+  `[IMPLEMENTED]`
+- `launch_surface` passes through from config. `[IMPLEMENTED]`
+- The manifest carries no volatile fields — no wall-clock timestamp, no git sha —
+  so a re-render on unchanged records is byte-identical and committing it creates
+  no churn. `[IMPLEMENTED]`
 
-## 6. Warning on drift and broken things (validate)
+**Validating and warning on drift**
 
-**Purpose:** `validate` reports problems for the human's attention and **never
-fails a build**. Findings carry a severity (`warn` / `error`) purely to rank the
-human's attention — both still exit 0.
+- `validate` reports findings for the human's attention and never fails a build;
+  severity (`warn` / `error`) only ranks attention — everything exits 0.
+  `[IMPLEMENTED]`
+- Frontmatter is checked against a hand-rolled schema subset
+  (`required` / `type` / `enum` / `pattern`); violations are warnings.
+  `[IMPLEMENTED]`
+- A `code_anchor.file` missing on disk is an error-severity finding (still exit
+  0). `[IMPLEMENTED]`
+- A `code_anchor.symbol` absent from its file (word-boundary search) is a warning.
+  `[IMPLEMENTED]`
+- A state `screenshot` that resolves to no file is a warning. `[IMPLEMENTED]`
+- Dangling links surface as error-severity findings. `[IMPLEMENTED]`
+- `validate` never raises, even on a deliberately broken map. `[IMPLEMENTED]`
 
-- Frontmatter is checked against a hand-rolled JSON-schema subset
-  (`required` / `type` / `enum` / `pattern`); any violation is a WARN finding.
-  `[IMPLEMENTED]` [`appmap/validate.py:44`](appmap/validate.py)
-- A `code_anchor.file` that doesn't exist on disk → ERROR-severity finding (still
-  exit 0). `[IMPLEMENTED]` [`appmap/validate.py:92`](appmap/validate.py)
-- A `code_anchor.symbol` not found (word-boundary search) within its file → WARN.
-  `[IMPLEMENTED]` [`appmap/validate.py:99`](appmap/validate.py)
-- A state `screenshot` that resolves to no file (searched against the surface dir
-  and configured screenshot dirs) → WARN. `[IMPLEMENTED]`
-  [`appmap/validate.py:107`](appmap/validate.py)
-- Dangling links (from §4) surface as ERROR-severity findings. `[IMPLEMENTED]`
-  [`appmap/validate.py:143`](appmap/validate.py)
-- **`validate()` never raises**, even on a deliberately broken map — the whole
-  point is to observe, not block. `[IMPLEMENTED]`
+**Finding and bootstrapping a map**
 
-## 7. The browsable rendered map
-
-**Purpose:** `render` writes static HTML (gitignored build output) so a human can
-browse the map.
-
-- Output is an index page (searchable, with review-queue and broken-link
-  banners) plus one page per surface. `[IMPLEMENTED]`
-  [`appmap/render.py:234`](appmap/render.py) (`render_map`)
-- Each surface page shows the surface's outgoing edges **and** its derived
-  incoming backlinks, plus the body prose. `[IMPLEMENTED]`
-  [`appmap/render.py:110`](appmap/render.py)
-- `rendered/` is gitignored; only records and the manifest are committed.
-  `[IMPLEMENTED]` [`.gitignore`](.gitignore)
-
-## 8. Finding and bootstrapping a map
-
-**Purpose:** the tool locates the nearest `app-map/` and provisions its single
-dependency without ceremony.
-
-- `find_map_dir` checks the cwd's `app-map/` child, then the cwd itself if it *is*
-  `app-map/`, then walks up parents; returns nothing if no map is found.
-  `[IMPLEMENTED]` [`appmap/config.py:42`](appmap/config.py)
+- `find_map_dir` locates the nearest `app-map/` — the cwd's child, the cwd itself
+  if it *is* `app-map/`, then walking up parents; returns nothing if none is
+  found. `[IMPLEMENTED]`
 - `load_config` reads `app-map.config.yaml` and fills sane defaults for absent
-  keys (e.g. `source_globs` → `["**/*"]`). `[IMPLEMENTED]`
-  [`appmap/config.py:57`](appmap/config.py)
-- CLI commands (`init` / `validate` / `render`) exit 0 for normal work; only CLI
-  misuse or a missing map exits 2. `[IMPLEMENTED]`
-  [`appmap/cli.py:70`](appmap/cli.py)
-- `init` scaffolds `app-map/` — always refreshing the canonical schema copy, but
+  keys. `[IMPLEMENTED]`
+- Commands (`init` / `validate` / `render`) exit 0 for normal work; only CLI
+  misuse or a missing map exits non-zero. `[IMPLEMENTED]`
+- `init` scaffolds `app-map/`, always refreshing the canonical schema copy but
   never clobbering an existing config. `[IMPLEMENTED]`
-  [`appmap/cli.py:46`](appmap/cli.py)
 - The `./app-map` wrapper preflights `python3` + `pyyaml`, bootstraps a local
-  `.tool-venv` once, and warns (no stack trace) when dependencies are missing.
-  It is the single entry the future commit hook also calls. `[IMPLEMENTED]`
-  [`app-map`](app-map)
+  `.tool-venv` once, and warns (no stack trace) when dependencies are missing. It
+  is the single entry the commit hook will also call. `[IMPLEMENTED]`
 
-## 9. Planned automation (not yet built)
-
-Captured here so the intent survives — none of this is wired up yet; the
-`hooks/pre-commit` file is a stub that just exits 0.
-[`hooks/pre-commit`](hooks/pre-commit)
+**Maintaining records on commit (hooks)**
 
 - On a commit touching `app-map/**` or a surface's `code_anchor.file`, re-stamp
   that record's `last_verified` (sha + date). Today `last_verified` is only ever
-  read, never written by any script. `[PLANNED]`
-- When a surface's *source* changed but its *record* didn't, set
-  `needs_review: true` and print a visible warning naming it. Today `needs_review`
-  is only human/agent-authored and merely read by the manifest and renderer.
-  `[PLANNED]`
+  read, never written by a script. `[PLANNED]`
+- When a surface's source changed but its record didn't, set `needs_review: true`
+  and print a visible warning naming it. `[PLANNED]`
 - A thin pre-commit shim calls `./app-map` to stamp `last_verified`, drift-flag
   `needs_review`, patch the manifest, and exit 0 unconditionally. `[PLANNED]`
+
+---
+
+See also: [`CLAUDE.md`](CLAUDE.md) (invariants + conventions),
+[`plans/app-map-tooling.md`](plans/app-map-tooling.md) (full design),
+[`appmap/schema/surface.schema.json`](appmap/schema/surface.schema.json) (per-field
+tier ownership).
