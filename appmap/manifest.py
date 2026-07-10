@@ -2,13 +2,13 @@
 
 All fields here are derived from the surface records; the manifest is safe to
 regenerate at any time. Kept low-stakes on merge by being fully derived: on a
-conflict, take either side and re-render.
+conflict, take either side and re-render. Deliberately carries no volatile
+fields (no wall-clock timestamp, no git sha) so the committed file stays stable
+across renders — a re-render on unchanged records produces a byte-identical file.
 """
 
 from __future__ import annotations
 
-import datetime as _dt
-import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -17,19 +17,6 @@ import yaml
 from .config import Config
 from .links import LinkGraph
 from .model import Surface
-
-
-def _git_sha(root: Path) -> str | None:
-    try:
-        out = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5,
-        )
-        if out.returncode == 0:
-            return out.stdout.strip()
-    except Exception:
-        pass
-    return None
 
 
 def build_manifest(
@@ -54,10 +41,6 @@ def build_manifest(
     ]
 
     manifest: dict[str, Any] = {
-        "generated_at": _dt.datetime.now(_dt.timezone.utc)
-        .replace(microsecond=0)
-        .isoformat(),
-        "map_sha": _git_sha(cfg.project_root),
         "launch_surface": cfg.launch_surface,
         "surfaces": index,
         "review_queue": review_queue,
