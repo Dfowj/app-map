@@ -1,0 +1,47 @@
+launch_surface: tab-bar
+surfaces:
+  cart:
+    title: Cart
+    kind: tab-root
+    path: surfaces/cart/surface.md
+    last_verified: null
+    needs_review: false
+  checkout:
+    title: Checkout
+    kind: sheet
+    path: surfaces/checkout/surface.md
+    last_verified: null
+    needs_review: false
+  home:
+    title: Home
+    kind: tab-root
+    path: surfaces/home/surface.md
+    last_verified: null
+    needs_review: false
+  product-detail:
+    title: Product Detail
+    kind: screen
+    path: surfaces/product-detail/surface.md
+    last_verified: null
+    needs_review: false
+  profile:
+    title: Profile
+    kind: tab-root
+    path: surfaces/profile/surface.md
+    last_verified: null
+    needs_review: false
+  search:
+    title: Search
+    kind: tab-root
+    path: surfaces/search/surface.md
+    last_verified: null
+    needs_review: false
+  tab-bar:
+    title: Tab Bar
+    kind: tab-bar
+    path: surfaces/tab-bar/surface.md
+    last_verified: null
+    needs_review: false
+review_queue: []
+link_health:
+  dangling_links: []
