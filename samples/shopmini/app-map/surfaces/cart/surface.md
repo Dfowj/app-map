@@ -21,7 +21,6 @@ edges:
     trigger: "Tap a line item"
 entry_points:
   - { type: deepLink, value: "shopmini://cart", to: cart }
-  - { type: pushNotification, note: "Abandoned-cart reminder", to: cart }
 states:
   - { name: default, screenshot: screenshot.default.png }
   - { name: empty,   screenshot: screenshot.empty.png }
@@ -36,7 +35,7 @@ needs_review: false
 ## Description
 
 The shopping cart. Shows line items or an empty state, and gates the checkout
-sheet. Reachable externally via deep link and abandoned-cart push.
+sheet. Reachable externally via the `shopmini://cart` deep link.
 
 ## Notes
 

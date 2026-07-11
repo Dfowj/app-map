@@ -30,9 +30,10 @@ Navigation vocabulary (keep these distinct in code and map):
 ## Entry points
 
 - Deep link: `shopmini://cart` → `cart`.
-- Push notification: "abandoned-cart reminder" → `cart`.
 
-Implement deep-link routing in `App/ShopMiniApp.swift` (`.onOpenURL`) so the entry point is code-grounded.
+Implement deep-link routing in `App/ShopMiniApp.swift` (`.onOpenURL`) so the entry
+point is code-grounded. Entry points must be code-grounded: only encode ways in
+that the source actually implements (no aspirational push/widget/Siri entries).
 
 ## Data dependencies
 
