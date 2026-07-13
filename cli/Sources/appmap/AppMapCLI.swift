@@ -5,7 +5,7 @@ import AppMapKit
 import ArgumentParser
 import Foundation
 
-let appmapVersion = "0.2.0"
+let appmapVersion = "0.3.0"
 
 @main
 struct AppMap: ParsableCommand {
@@ -13,7 +13,7 @@ struct AppMap: ParsableCommand {
         commandName: "appmap",
         abstract: "App Map — a living, code-grounded record of an app's surfaces.",
         version: appmapVersion,
-        subcommands: [Validate.self]
+        subcommands: [Validate.self, Render.self]
     )
 }
 
@@ -66,5 +66,35 @@ struct Validate: ParsableCommand {
         }
         print("\n\(surfaces.count) surface(s): \(errors) error-level, \(warns) warn-level finding(s).")
         print("(warn, record, never block — exit 0)")
+    }
+}
+
+struct Render: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Rebuild manifest.yaml and the static site in rendered/ (wholesale)."
+    )
+
+    @Option(name: .customLong("map"), help: "Path to the app-map/ dir (default: auto-detect).")
+    var map: String?
+
+    func run() throws {
+        let cfg = try resolveConfig(explicit: map)
+        let surfaces = loadSurfaces(in: cfg.surfacesDir)
+        let links = buildLinks(surfaces)
+
+        let manifest = buildManifestYAML(surfaces: surfaces, links: links, cfg: cfg)
+        try manifest.write(to: cfg.manifestPath, atomically: true, encoding: .utf8)
+
+        let outDir = try renderMap(surfaces, links: links, cfg: cfg)
+
+        print("rendered \(surfaces.count) surface(s) -> \(outDir.path)")
+        print("manifest -> \(cfg.manifestPath.path)")
+        let review = surfaces.filter(\.needsReview).map(\.id).sorted()
+        if !review.isEmpty {
+            print("  review queue: \(review.joined(separator: ", "))")
+        }
+        for d in links.dangling {
+            print("  broken link: \(d.fromID) -> \(d.to) (\(d.kind))")
+        }
     }
 }

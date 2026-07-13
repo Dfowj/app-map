@@ -29,6 +29,8 @@ app-map/
   schema/surface.schema.json    # the record contract
   bin/appmap                    # committed CLI (universal macOS binary)
   surfaces/<id>/surface.md      # the map data — grows as the app is mapped
+  manifest.yaml                 # derived index (committed, regenerated)
+  rendered/                     # derived static site (gitignore this)
 ```
 
 The `bin/appmap` CLI is a compiled universal binary (arm64 + x86_64) with no
@@ -36,11 +38,17 @@ runtime dependencies — nothing to build or install. Current commands:
 
 ```sh
 app-map/bin/appmap validate    # schema violations, broken links, dead anchors
+app-map/bin/appmap render      # rebuild manifest.yaml + rendered/ static site
 ```
 
+`render` emits a browsable site into `rendered/`: a searchable surface index,
+a navigation-graph overview, and one page per surface (outgoing + derived
+incoming edges, states with screenshots, prose). Open
+`app-map/rendered/index.html` in a browser. Add `app-map/rendered/` to your
+`.gitignore` — records and manifest are the committed source of truth.
+
 Every command **warns, records, never blocks** — exit 0 always, except on CLI
-misuse. Later milestones add `render` (manifest + browsable HTML) and drift
-stamping.
+misuse. A later milestone adds drift stamping.
 
 ## How it works
 

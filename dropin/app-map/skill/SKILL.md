@@ -65,6 +65,14 @@ contract, this file is only the guide.
    sentence or two of current-state fact. This is the one moment you may write
    prose, because no human has yet.
 
+## Finding your way around
+
+`app-map/manifest.yaml` is the derived fast index — every surface's id, title,
+kind, record path, and `needs_review` flag, plus the map-wide `review_queue`
+and `link_health`. Read it to find existing surfaces instead of globbing
+`surfaces/`. It is tier-1 output: never edit it by hand; it's rebuilt by
+`appmap render`.
+
 ## Reconciling an existing record
 
 Update only what the code contradicts, keyed by stable identity: edges by `id`,
@@ -98,14 +106,18 @@ to the user. Never rewrite it in place.
 
 ## Checking your work
 
-After writing or reconciling records, run the validator:
+After writing or reconciling records:
 
 ```sh
-app-map/bin/appmap validate
+app-map/bin/appmap validate   # findings: schema, broken links, dead anchors
+app-map/bin/appmap render     # rebuild manifest.yaml + rendered/ site
 ```
 
-It reports schema violations, dangling `edge.to` / `contains` / `entry_point.to`
-targets, missing anchor files, vanished symbols, and unresolved screenshots.
-Resolve every finding you caused; findings you didn't cause (pre-existing
-warnings), leave and mention in your response. The validator never blocks —
-severity ranks attention, and it always exits 0.
+`validate` reports schema violations, dangling `edge.to` / `contains` /
+`entry_point.to` targets, missing anchor files, vanished symbols, and
+unresolved screenshots. Resolve every finding you caused; findings you didn't
+cause (pre-existing warnings), leave and mention in your response. It never
+blocks — severity ranks attention, and it always exits 0.
+
+`render` keeps the derived index and the human-browsable site in sync with the
+records you touched. Commit `manifest.yaml`; `rendered/` is gitignored.

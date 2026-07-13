@@ -2,6 +2,22 @@
 
 Newest first. One paragraph per entry: what changed and why.
 
+## 2026-07-13 — Milestone 3: a human can browse the map (`appmap render`)
+
+`appmap render` rebuilds `manifest.yaml` wholesale (id-sorted, no volatile
+fields, hand-rolled deterministic YAML emitter — the regenerated shopmini
+manifest is byte-identical to the committed gold one) and emits a static site
+to `rendered/`: a searchable index with per-surface description snippets and
+in/out edge counts, one page per surface (prose first, then contains /
+contained-by / outgoing / derived-incoming / entry points / states /
+dependencies), and — beyond the plan, for the PM audience — a `map.html`
+navigation-graph overview: deterministic BFS-layered SVG from the launch
+surface, kind-colored nodes linking to surface pages, dashed containment vs.
+arrowed navigation, hover tooltips with triggers. All pages are self-contained
+(inline CSS/JS, dark-mode aware). Backlinks are derived at render time only.
+Skill now reads `manifest.yaml` as the fast index and runs `render` after
+record changes; 14 new unit tests (41 total).
+
 ## 2026-07-12 — Milestone 2: the agent can check its work (`appmap validate`)
 
 First Swift code: `cli/` SwiftPM package (`swift-argument-parser` + `Yams`)
