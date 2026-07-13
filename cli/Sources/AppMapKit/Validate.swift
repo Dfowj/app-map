@@ -127,6 +127,14 @@ func anchorFindings(_ surface: SurfaceRecord, cfg: Config) -> [Finding] {
     return []
 }
 
+/// A watches entry pointing at a vanished file is a hole in the drift net —
+/// same class of dead reference as a missing anchor file.
+func watchesFindings(_ surface: SurfaceRecord, cfg: Config) -> [Finding] {
+    surface.watches
+        .filter { !FileManager.default.fileExists(atPath: cfg.projectRoot.appendingPathComponent($0).path) }
+        .map { Finding(.error, surface.id, "watches file missing: \($0)") }
+}
+
 func screenshotFindings(_ surface: SurfaceRecord, cfg: Config) -> [Finding] {
     var out: [Finding] = []
     let fm = FileManager.default
@@ -172,6 +180,7 @@ public func validate(_ surfaces: [SurfaceRecord], cfg: Config) -> [Finding] {
     for s in surfaces {
         if let schema { findings += schemaFindings(s, schema: schema) }
         findings += anchorFindings(s, cfg: cfg)
+        findings += watchesFindings(s, cfg: cfg)
         findings += screenshotFindings(s, cfg: cfg)
     }
 

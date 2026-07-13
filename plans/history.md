@@ -2,6 +2,22 @@
 
 Newest first. One paragraph per entry: what changed and why.
 
+## 2026-07-13 — Watch lists: drift detection beyond the code anchor
+
+Added tier-2 `watches: [file...]` to the schema (all three copies + gold cart
+record, which now watches `CartViewModel.swift` — the file its notes already
+cite for enablement/empty-state logic). `appmap stamp` treats watched files
+like the anchor file: any of them staged without the record flags
+`needs_review`, closing the blind spot where a viewmodel-only change never
+reached the review queue. `validate` reports vanished watch files as
+error-level findings (a hole in the drift net is a dead reference); the
+rendered surface page lists watched files; the skill instructs agents to
+record the files that carry a surface's logic — not everything it imports.
+Verified with a hermetic viewmodel-only-commit scenario (which also caught
+that shopmini's sample map lacked `hooks/` — now symlinked, and a dangling
+hook symlink silently no-ops, worth remembering). 4 new tests (56 total);
+binary bumped to 0.5.0.
+
 ## 2026-07-13 — Future directions: topology → semantics
 
 Added a "Future directions" section to `TODOS.md`, motivated by two real user

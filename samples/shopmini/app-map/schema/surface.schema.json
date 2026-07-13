@@ -27,6 +27,11 @@
         "symbol": { "type": "string" }
       }
     },
+    "watches": {
+      "description": "TIER-2. Additional project-root-relative files that carry this surface's logic (view models, services). Drift detection flags the record when any of them changes without it; the anchor file is always watched. Validator flags entries whose file vanished.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "contains": {
       "description": "TIER-2. Structural nesting (tab-bar contains its tab roots). NOT navigation edges.",
       "type": "array",

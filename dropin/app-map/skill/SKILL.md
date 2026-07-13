@@ -46,7 +46,10 @@ contract, this file is only the guide.
 2. **Kind.** One of `screen | tab-root | tab-bar | sheet | modal | popover |
    container`.
 3. **Code anchor.** The one file + symbol that best *is* this surface (usually
-   the SwiftUI view type).
+   the SwiftUI view type). Add `watches` for the other files that carry this
+   surface's logic — its view model, a dedicated service — so drift detection
+   covers them too (the anchor file is always watched). List only files whose
+   change would plausibly invalidate this record, not everything it imports.
 4. **Relationships — three distinct types, never conflated:**
    - `edges`: **outgoing** navigation only (push, present, tab-switch,
      deep-link). Incoming is derived later; never write it. Each edge gets a
@@ -97,11 +100,12 @@ to the user. Never rewrite it in place.
 ## Working the review queue
 
 A pre-commit hook (`appmap stamp`) flags `needs_review: true` on any surface
-whose `code_anchor.file` changed in a commit without its record changing. The
-manifest's `review_queue` lists them. For each flagged surface:
+whose `code_anchor.file` — or any `watches` entry — changed in a commit
+without its record changing. The manifest's `review_queue` lists them. For
+each flagged surface:
 
-1. Read the record, then the current code at its anchor (use `git log -p` on
-   the anchor file to see what changed since `last_verified`).
+1. Read the record, then the current code at its anchor and watched files
+   (use `git log -p` on them to see what changed since `last_verified`).
 2. Reconcile tier 2 as described above — update only what the code contradicts.
 3. If the record is accurate again, set `needs_review: false` and stage the
    record (the hook re-stamps `last_verified` at commit).

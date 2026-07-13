@@ -111,6 +111,8 @@ kind: tab-root                    # screen | tab-root | tab-bar | sheet | modal 
 code_anchor:
   file: Sources/ShopMini/Cart/CartView.swift
   symbol: CartView
+watches:                          # extra files that carry this surface's logic;
+  - Sources/ShopMini/Cart/CartViewModel.swift   # drift detection covers them too
 edges:                            # OUTGOING navigation only; incoming is derived
   - id: checkout-cta
     to: checkout

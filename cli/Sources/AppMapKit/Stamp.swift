@@ -3,8 +3,8 @@
 // when a skill session works the review queue.
 //
 //   1. Re-stamp `last_verified` (sha + date) on records staged in this commit.
-//   2. If a surface's `code_anchor.file` is staged but its record is not,
-//      set `needs_review: true` and warn visibly.
+//   2. If a surface's `code_anchor.file` or any `watches` entry is staged but
+//      its record is not, set `needs_review: true` and warn visibly.
 //   3. Rebuild the manifest so `review_queue` reflects the flags.
 //
 // Records are patched line-surgically: only the tier-1 `last_verified` /
@@ -90,21 +90,27 @@ public func stamp(
     for surface in loadSurfaces(in: cfg.surfacesDir) {
         let recordRel = relativePath(of: surface.path, under: cfg.projectRoot)
         let recordChanged = recordRel.map { changedFiles.contains($0) } ?? false
-        let anchorFile = surface.codeAnchor["file"] as? String
-        let anchorChanged = anchorFile.map { changedFiles.contains($0) } ?? false
+        // The anchor file is always watched; `watches` extends the net to the
+        // files that carry the surface's logic (view models, services).
+        var watchedSources: [String] = []
+        if let anchorFile = surface.codeAnchor["file"] as? String {
+            watchedSources.append(anchorFile)
+        }
+        watchedSources += surface.watches
+        let changedSources = watchedSources.filter { changedFiles.contains($0) }
 
         var patched: String? = nil
         let original = (try? String(contentsOf: surface.path, encoding: .utf8)) ?? ""
         if recordChanged {
             patched = patchRecordText(original, lastVerified: (sha: sha, date: date))
             if patched != nil { result.stamped.append(surface.id) }
-        } else if anchorChanged && !surface.needsReview {
+        } else if !changedSources.isEmpty && !surface.needsReview {
             patched = patchRecordText(original, needsReview: true)
             if patched != nil {
                 result.flagged.append(surface.id)
                 result.notes.append(
-                    "\(surface.id): \(anchorFile ?? "?") changed but its record didn't"
-                    + " — flagged needs_review")
+                    "\(surface.id): \(changedSources.joined(separator: ", ")) changed but its"
+                    + " record didn't — flagged needs_review")
             }
         }
         if let patched, patched != original {

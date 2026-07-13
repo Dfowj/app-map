@@ -218,6 +218,10 @@ func renderSurfacePage(
         let sym = (anchor["symbol"] as? String).map { " &middot; <code>\(esc($0))</code>" } ?? ""
         parts.append("<p class='mut'><code>\(esc(file))</code>\(sym)</p>")
     }
+    if !s.watches.isEmpty {
+        let files = s.watches.map { "<code>\(esc($0))</code>" }.joined(separator: ", ")
+        parts.append("<p class='mut'><span class='via'>also watches</span> \(files)</p>")
+    }
 
     if !s.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         parts.append("<div class='prose'>" + miniMarkdown(s.body) + "</div>")

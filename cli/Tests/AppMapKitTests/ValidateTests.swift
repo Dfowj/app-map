@@ -90,6 +90,32 @@ final class AnchorFindingsTests: XCTestCase {
     }
 }
 
+final class WatchesFindingsTests: XCTestCase {
+    func testMissingWatchesFileIsError() throws {
+        let tm = try TempMap()
+        try tm.writeSurface("home", [
+            "id": "home", "title": "Home", "kind": "screen",
+            "watches": ["Sources/GoneViewModel.swift"],
+        ])
+        let findings = tm.validateAll()
+        XCTAssertTrue(findings.contains {
+            $0.level == .error
+                && $0.message.contains("watches file missing: Sources/GoneViewModel.swift")
+        })
+    }
+
+    func testPresentWatchesFileNoFinding() throws {
+        let tm = try TempMap()
+        try tm.writeFile("Sources/HomeViewModel.swift", "final class HomeViewModel {}\n")
+        try tm.writeSurface("home", [
+            "id": "home", "title": "Home", "kind": "screen",
+            "watches": ["Sources/HomeViewModel.swift"],
+        ])
+        let findings = tm.validateAll()
+        XCTAssertFalse(findings.contains { $0.message.contains("watches") })
+    }
+}
+
 final class ScreenshotFindingsTests: XCTestCase {
     func testUnresolvedScreenshotIsWarn() throws {
         let tm = try TempMap()

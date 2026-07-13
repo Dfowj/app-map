@@ -51,6 +51,11 @@ public struct SurfaceRecord {
 
     public var codeAnchor: [String: Any] { asStringDict(data["code_anchor"]) ?? [:] }
 
+    /// Additional files whose changes should flag this record for review.
+    public var watches: [String] {
+        (data["watches"] as? [Any])?.compactMap { $0 as? String } ?? []
+    }
+
     public var dependencies: [String: Any] { asStringDict(data["dependencies"]) ?? [:] }
 
     public var needsReview: Bool { data["needs_review"] as? Bool ?? false }

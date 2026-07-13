@@ -69,6 +69,7 @@ final class StampRulesTests: XCTestCase {
         let tm = try TempMap()
         try tm.writeConfig(["launch_surface": "cart"])
         try tm.writeFile("Sources/CartView.swift", "struct CartView {}\n")
+        try tm.writeFile("Sources/CartViewModel.swift", "final class CartViewModel {}\n")
         try tm.writeSurfaceRaw("cart", """
         ---
         id: cart
@@ -77,6 +78,8 @@ final class StampRulesTests: XCTestCase {
         code_anchor:
           file: Sources/CartView.swift
           symbol: CartView
+        watches:
+          - Sources/CartViewModel.swift
         needs_review: false
         ---
 
@@ -121,6 +124,31 @@ final class StampRulesTests: XCTestCase {
         XCTAssertEqual(record.lastVerified["sha"] as? String, "abc1234")
         XCTAssertEqual(record.lastVerified["date"] as? String, "2026-07-13")
         XCTAssertFalse(record.needsReview)
+    }
+
+    func testWatchedFileChangedWithoutRecordFlagsReview() throws {
+        let tm = try makeMap()
+        let result = try stamp(
+            cfg: tm.config(), changedFiles: ["Sources/CartViewModel.swift"],
+            sha: "abc1234", date: "2026-07-13")
+
+        XCTAssertEqual(result.flagged, ["cart"])
+        XCTAssertTrue(try tm.loadSurface("cart").needsReview)
+        XCTAssertTrue(result.notes.contains {
+            $0.contains("Sources/CartViewModel.swift")
+        })
+    }
+
+    func testWatchedFileChangedWithRecordGetsStampedNotFlagged() throws {
+        let tm = try makeMap()
+        let result = try stamp(
+            cfg: tm.config(),
+            changedFiles: ["Sources/CartViewModel.swift", "app-map/surfaces/cart/surface.md"],
+            sha: "abc1234", date: "2026-07-13")
+
+        XCTAssertEqual(result.stamped, ["cart"])
+        XCTAssertTrue(result.flagged.isEmpty)
+        XCTAssertFalse(try tm.loadSurface("cart").needsReview)
     }
 
     func testUnrelatedChangeTouchesNothing() throws {

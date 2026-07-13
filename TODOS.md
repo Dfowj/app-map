@@ -22,11 +22,13 @@ button enabled?"). Ordered by leverage; items marked *(schema)* are deliberate
 schema changes — update `schema/surface.schema.json`, the `dropin/` copy, and
 the gold records together.
 
-- [ ] **Watch lists** *(schema)* — tier-2 `watches: [file...]` on a record,
+- [x] **Watch lists** *(schema)* — tier-2 `watches: [file...]` on a record,
   feeding `appmap stamp` alongside `code_anchor.file`. Fixes a real drift
   blind spot: enablement/data logic usually lives in a viewmodel or service,
   and today a change there (e.g. `CartViewModel.swift` only) never flags the
   surface. Prerequisite for trustworthy conditions/dependencies below.
+  *(Done 2026-07-13: schema + gold cart record + stamp/validate/render/skill;
+  vanished watch files are error-level validate findings.)*
 - [ ] **Grounded conditions** *(schema)* — first-class `enabled_when` / `when`
   on edges and states: prose condition + grounding symbol, symbol verified by
   `validate` like anchor symbols, rendered prominently on the surface page.

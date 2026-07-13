@@ -5,7 +5,7 @@ import AppMapKit
 import ArgumentParser
 import Foundation
 
-let appmapVersion = "0.4.0"
+let appmapVersion = "0.5.0"
 
 @main
 struct AppMap: ParsableCommand {

@@ -13,7 +13,7 @@ A small but **coherent, real** SwiftUI shopping app used as the test target for 
 | `tab-bar` | `tab-bar` | `RootTabView` → App/RootTabView.swift | **contains** `[home, search, cart, profile]`; is `launch_surface` |
 | `home` | `tab-root` | `HomeView` → Home/HomeView.swift | push → `product-detail` (tap a product) |
 | `search` | `tab-root` | `SearchView` → Search/SearchView.swift | push → `product-detail` (tap a result) |
-| `cart` | `tab-root` | `CartView` → Cart/CartView.swift | present sheet → `checkout` (tap "Checkout"); push → `product-detail` (tap a line item) |
+| `cart` | `tab-root` | `CartView` → Cart/CartView.swift | present sheet → `checkout` (tap "Checkout"); push → `product-detail` (tap a line item). **watches** Cart/CartViewModel.swift (carries the enablement/empty-state logic its notes cite) |
 | `profile` | `tab-root` | `ProfileView` → Profile/ProfileView.swift | orders list; outgoing edges optional |
 | `product-detail` | `screen` | `ProductDetailView` → Product/ProductDetailView.swift | "Add to Cart" mutates cart (**not** an edge) |
 | `checkout` | `sheet` | `CheckoutView` → Checkout/CheckoutView.swift | external dep Stripe; on success dismisses. OrderConfirmation modal optional/deferred |

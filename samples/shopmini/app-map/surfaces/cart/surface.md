@@ -5,6 +5,8 @@ kind: tab-root
 code_anchor:
   file: Sources/ShopMini/Cart/CartView.swift
   symbol: CartView
+watches:
+  - Sources/ShopMini/Cart/CartViewModel.swift
 contains: []
 edges:
   - id: checkout-cta
