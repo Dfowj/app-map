@@ -2,6 +2,22 @@
 
 Newest first. One paragraph per entry: what changed and why.
 
+## 2026-07-13 — Milestone 4: the map notices drift (`appmap stamp`)
+
+`appmap stamp` (run by the new `hooks/pre-commit` shim in the drop-in) applies
+the drift rules to the staged file set: records staged in the commit get
+`last_verified` re-stamped (short HEAD sha + date — the commit the record was
+verified on top of); a surface whose `code_anchor.file` is staged without its
+record gets `needs_review: true` and a visible warning; the manifest is
+rebuilt so `review_queue` reflects the flags; everything stamp modifies is
+`git add`ed into the same commit. Exit 0 unconditionally. Records are patched
+line-surgically — only the two tier-1 lines change, so hand-authored YAML
+formatting and tier-3 bodies survive byte-for-byte (11 new tests, 52 total).
+Skill gained a "Working the review queue" section. Exit criteria ran as a
+scripted scenario in a hermetic git copy of shopmini: source-only commit set
+the flag via the hook, the reconcile commit drained the queue and stamped
+`last_verified`, tier-3 prose and flow-style YAML intact throughout.
+
 ## 2026-07-13 — Milestone 3: a human can browse the map (`appmap render`)
 
 `appmap render` rebuilds `manifest.yaml` wholesale (id-sorted, no volatile

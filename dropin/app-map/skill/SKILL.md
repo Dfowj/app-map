@@ -21,6 +21,8 @@ have written.
 - You modified an existing surface (navigation, states, dependencies, moved its
   file) → reconcile its record.
 - You were asked to map surfaces directly → encode each one.
+- The manifest's `review_queue` is non-empty → work the queue (below), either
+  when asked or opportunistically when a task touches a flagged surface.
 
 Do this as part of finishing the task, like updating a test.
 
@@ -92,7 +94,19 @@ what's already there.
 Want to change existing human prose or notes? Propose the text in your response
 to the user. Never rewrite it in place.
 
-## Boundaries
+## Working the review queue
+
+A pre-commit hook (`appmap stamp`) flags `needs_review: true` on any surface
+whose `code_anchor.file` changed in a commit without its record changing. The
+manifest's `review_queue` lists them. For each flagged surface:
+
+1. Read the record, then the current code at its anchor (use `git log -p` on
+   the anchor file to see what changed since `last_verified`).
+2. Reconcile tier 2 as described above — update only what the code contradicts.
+3. If the record is accurate again, set `needs_review: false` and stage the
+   record (the hook re-stamps `last_verified` at commit).
+4. If something needs a human decision (e.g. a note-bearing edge vanished from
+   code), leave `needs_review: true` and say why in your response.
 
 - **Descriptive, not declarative.** No todos, intentions, or planned work in any
   record.
