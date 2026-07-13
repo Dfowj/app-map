@@ -2,6 +2,18 @@
 
 Newest first. One paragraph per entry: what changed and why.
 
+## 2026-07-13 — Future directions: topology → semantics
+
+Added a "Future directions" section to `TODOS.md`, motivated by two real user
+questions the current map can't answer well ("does home still hit the legacy
+feed?", "when is the offer button enabled?"): watch lists so drift detection
+covers viewmodel/service files beyond the single code anchor (today a
+`CartViewModel.swift`-only change never flags `cart` — a genuine blind spot),
+grounded conditions on edges/states, grounded dependencies, an "ask the map"
+skill workflow that verifies-then-answers and reconciles stale records as a
+side effect, a derived per-surface timeline, and gold Q&A evals for shopmini.
+Schema-touching items are marked as deliberate schema changes per convention.
+
 ## 2026-07-13 — PRD.md: user-first product & architecture doc
 
 Wrote a root `PRD.md` explaining the project to newcomers, organized the same
