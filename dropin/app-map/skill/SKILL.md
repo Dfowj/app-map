@@ -108,6 +108,8 @@ manifest's `review_queue` lists them. For each flagged surface:
 4. If something needs a human decision (e.g. a note-bearing edge vanished from
    code), leave `needs_review: true` and say why in your response.
 
+## Boundaries
+
 - **Descriptive, not declarative.** No todos, intentions, or planned work in any
   record.
 - **Preserve tier 3, always.** Never overwrite or delete existing prose or

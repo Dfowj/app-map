@@ -1,5 +1,9 @@
 # App Map — Development Plan
 
+> **Status (2026-07-13): all four milestones shipped.** See
+> [`history.md`](history.md) for the per-milestone log. What remains lives in
+> "Parked" below and in [`TODOS.md`](../TODOS.md).
+
 ## The story
 
 An agent is deep in a coding task: it just reworked ShopMini's cart screen to add a

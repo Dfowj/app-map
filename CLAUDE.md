@@ -20,8 +20,9 @@ built after, one command at a time, each justified by a real need.
   `previous-iteration/` — reference it, don't extend it).
 - **Swift CLI, no runtime deps.** `appmap` is a compiled universal binary built
   from `cli/` (SwiftPM: `swift-argument-parser` + `Yams`), committed into the
-  drop-in. Consuming repos never build anything. (No CLI yet — arrives Milestone
-  2.)
+  drop-in at `dropin/app-map/bin/appmap`. Consuming repos never build anything.
+  Commands: `validate` (findings, never fails), `render` (manifest + static
+  site), `stamp` (drift detection, run by `hooks/pre-commit`).
 - **Scrappy distribution.** Tool + data ship as one dropped-in `app-map/` folder
   (template lives at `dropin/app-map/`). Copy-and-run over packaging elegance.
 - **Invariants (don't violate):**
@@ -39,7 +40,13 @@ built after, one command at a time, each justified by a real need.
 
 - **Plans live in `plans/`.** Schema changes are deliberate: update
   `schema/surface.schema.json`, the `dropin/` copy, and the gold records
-  together. The Swift CLI gets unit tests from Milestone 2 on.
+  together.
+- **Dev loop for `cli/`:** edit → `swift test` (in `cli/`) → sanity-run the
+  sample (`cd samples/shopmini && ./app-map/bin/appmap validate` and `render`)
+  → rebuild the universal binary into `dropin/app-map/bin/`
+  (`swift build -c release --arch arm64 --arch x86_64`) before committing CLI
+  changes. Keep `skill/SKILL.md` synced from the canonical
+  `dropin/app-map/skill/SKILL.md`.
 - **Log every change** in [`plans/history.md`](plans/history.md) — newest first,
   one paragraph max, summarizing what changed and the motivation.
 - **Record future work** in [`TODOS.md`](TODOS.md) — when a task or nice-to-have
