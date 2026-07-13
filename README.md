@@ -10,6 +10,9 @@ Each surface is one markdown file with YAML frontmatter at
 states, and dependencies, plus human prose. Records are the source of truth;
 everything else (`manifest.yaml`, the rendered site) is derived.
 
+**New here? Read [PRD.md](PRD.md)** — the problem, what you get as a PM /
+engineer / agent, and the architecture that keeps the map trustworthy.
+
 ## Try it
 
 ```sh

@@ -2,6 +2,17 @@
 
 Newest first. One paragraph per entry: what changed and why.
 
+## 2026-07-13 — PRD.md: user-first product & architecture doc
+
+Wrote a root `PRD.md` explaining the project to newcomers, organized the same
+way this iteration reorganized the work: the user problem and what each
+audience gets (PM browsing, engineer code-anchoring, agent fast-index) up
+front, the day-to-day loop next, and mechanics (tiers, data model, CLI
+implementation, parent-sha stamping rationale, non-goals) as the afterthought.
+Linked from the README. Also settled a design question: `last_verified.sha`
+stays, recording the parent commit — conservative diff base plus the staleness
+signal humans actually need; the imprecision only over-reports.
+
 ## 2026-07-13 — Milestone 4: the map notices drift (`appmap stamp`)
 
 `appmap stamp` (run by the new `hooks/pre-commit` shim in the drop-in) applies
