@@ -98,9 +98,14 @@ to the user. Never rewrite it in place.
 
 ## Checking your work
 
-No validator exists yet. Before finishing: re-read the schema and confirm every
-field you wrote conforms; confirm every `edge.to` / `contains` / `entry_point.to`
-names a surface record that exists (or that you also created).
+After writing or reconciling records, run the validator:
 
-<!-- Milestone 2 will replace this section with: run `app-map/bin/appmap validate`
-     and resolve findings. -->
+```sh
+app-map/bin/appmap validate
+```
+
+It reports schema violations, dangling `edge.to` / `contains` / `entry_point.to`
+targets, missing anchor files, vanished symbols, and unresolved screenshots.
+Resolve every finding you caused; findings you didn't cause (pre-existing
+warnings), leave and mention in your response. The validator never blocks —
+severity ranks attention, and it always exits 0.

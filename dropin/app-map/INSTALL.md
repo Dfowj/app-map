@@ -27,12 +27,20 @@ app-map/
   INSTALL.md                    # this file
   skill/SKILL.md                # the agent skill (register in step 2)
   schema/surface.schema.json    # the record contract
+  bin/appmap                    # committed CLI (universal macOS binary)
   surfaces/<id>/surface.md      # the map data — grows as the app is mapped
 ```
 
-Later milestones add a committed `bin/appmap` CLI (validate, render, drift
-stamping) and derived `manifest.yaml` / gitignored `rendered/`. None of that
-exists yet — at this stage the skill and schema are the whole product.
+The `bin/appmap` CLI is a compiled universal binary (arm64 + x86_64) with no
+runtime dependencies — nothing to build or install. Current commands:
+
+```sh
+app-map/bin/appmap validate    # schema violations, broken links, dead anchors
+```
+
+Every command **warns, records, never blocks** — exit 0 always, except on CLI
+misuse. Later milestones add `render` (manifest + browsable HTML) and drift
+stamping.
 
 ## How it works
 
