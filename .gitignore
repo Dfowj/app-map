@@ -1,6 +1,13 @@
 # Rendered map output is build output — records are the source of truth.
 **/app-map/rendered/
 
+# Binary placed at runtime (downloaded from release or built locally)
+samples/shopmini/app-map/bin/
+
+# Release build artifacts
+_staging/
+app-map-v*.tar.gz
+
 # Python
 __pycache__/
 *.pyc

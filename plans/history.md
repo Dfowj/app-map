@@ -2,6 +2,16 @@
 
 Newest first. One paragraph per entry: what changed and why.
 
+## 2026-07-14 — Release workflow: eliminate dropin duplication
+
+Replaced the committed `dropin/app-map/` folder (which duplicated schema, skill,
+hooks, and a 6MB binary) with a release-time assembly workflow. New
+`script/assemble-dropin.sh` builds the universal binary and assembles the tarball
+from canonical sources (`schema/`, `skill/`, `install/`). A GitHub Actions
+workflow (`.github/workflows/release.yml`) triggers on tag push to run tests,
+create a GitHub Release with the tarball, and deploy the ShopMini sample's
+rendered map to GitHub Pages as a live demo.
+
 ## 2026-07-13 — Watch lists: drift detection beyond the code anchor
 
 Added tier-2 `watches: [file...]` to the schema (all three copies + gold cart

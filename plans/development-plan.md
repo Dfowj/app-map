@@ -61,24 +61,24 @@ A consuming repo gets one folder, dropped in and committed:
 
 ```
 app-map/
-  INSTALL.md               # ~3 steps: copy folder, register skill, done
+  INSTALL.md               # ~3 steps: download, register skill, done
   skill/SKILL.md           # copied (or symlinked) into .claude/skills/app-map/
   schema/surface.schema.json
-  bin/appmap               # committed universal binary (exists from milestone 2 on)
+  bin/appmap               # universal macOS binary (no runtime deps)
+  hooks/pre-commit         # drift-detection shim
   surfaces/<id>/surface.md # the map data, grows in place
   manifest.yaml            # derived index (milestone 3)
   rendered/                # gitignored (milestone 3)
 ```
 
 Tool + data live in one folder. That's deliberate: copy-and-run beats packaging
-elegance at this stage. The binary is compiled in *this* repo and copied into the
-drop-in; consuming repos never build anything. Splitting tool from data, or moving
-to a real install story, is a later problem — revisit if the binary churn in git
-gets annoying.
+elegance at this stage. The tarball is assembled from canonical sources by
+`script/assemble-dropin.sh` and published as a GitHub Release on tag push
+(`.github/workflows/release.yml`). Consuming repos download the tarball —
+they never build anything.
 
-In this repo, the drop-in template lives at `dropin/app-map/` (created in
-milestone 1), and the Swift package that produces `bin/appmap` lives at `cli/`
-(created in milestone 2).
+The Swift package that produces `bin/appmap` lives at `cli/`. Release-only
+files (INSTALL.md, the pre-commit hook) live at `install/`.
 
 ## Milestones
 
@@ -100,7 +100,8 @@ Build:
   Covers: when to fire, how to identify a surface and its kind, which fields it
   owns (tier 2), how it uses conversation context (drafting prose on *new* records
   only), and the boundaries it must not cross.
-- `dropin/app-map/` template folder with `INSTALL.md`, skill, schema.
+- `install/` folder with `INSTALL.md` and `hooks/pre-commit` (assembled into
+  the release tarball by `script/assemble-dropin.sh`).
 
 Exit criteria:
 - Fresh-encode test: point the skill at ShopMini screens with the gold records
@@ -190,5 +191,5 @@ drain.
   `previous-iteration/` — reference it, don't extend it.
 - The Swift CLI gets unit tests from milestone 2 on (`swift test` in `cli/`);
   shopmini remains the end-to-end check for every milestone.
-- Schema changes are allowed but deliberate: update `schema/surface.schema.json`,
-  the drop-in copy, and the gold records together.
+- Schema changes are allowed but deliberate: update `schema/surface.schema.json`
+  and the gold records together.

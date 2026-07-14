@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        working-directory: cli
+        run: swift test
+
+      - name: Assemble drop-in
+        run: ./script/assemble-dropin.sh --version "${{ steps.version.outputs.version }}"
+
+      - name: Upload tarball as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dropin
+          path: app-map-v${{ steps.version.outputs.version }}.tar.gz
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app-map-v${{ steps.version.outputs.version }}.tar.gz
+            install/INSTALL.md
+          generate_release_notes: true
+
+  deploy-pages:
+    needs: build-and-release
+    runs-on: macos-15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dropin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dropin
+
+      - name: Extract binary and render sample
+        run: |
+          tar xzf app-map-v*.tar.gz
+          mkdir -p samples/shopmini/app-map/bin
+          cp app-map/bin/appmap samples/shopmini/app-map/bin/appmap
+          chmod +x samples/shopmini/app-map/bin/appmap
+          cd samples/shopmini
+          ./app-map/bin/appmap render
+
+      - name: Prepare pages content
+        run: |
+          mkdir -p _site
+          cp -R samples/shopmini/app-map/rendered/* _site/
+          touch _site/.nojekyll
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -13,10 +13,21 @@ everything else (`manifest.yaml`, the rendered site) is derived.
 **New here? Read [PRD.md](PRD.md)** — the problem, what you get as a PM /
 engineer / agent, and the architecture that keeps the map trustworthy.
 
+## Demo
+
+Browse the rendered ShopMini sample map on
+[GitHub Pages](https://dfowj.github.io/app-map/).
+
 ## Try it
 
 ```sh
 cd samples/shopmini
+
+# If you haven't built the CLI yet:
+cd ../../cli && swift build -c release && cd -
+mkdir -p app-map/bin
+cp ../../cli/.build/release/appmap app-map/bin/appmap
+
 ./app-map/bin/appmap validate   # findings: schema, broken links, dead anchors
 ./app-map/bin/appmap render     # rebuild manifest.yaml + rendered/ site
 open app-map/rendered/index.html
@@ -24,10 +35,11 @@ open app-map/rendered/index.html
 
 ## Adopt it in a repo
 
-Copy `dropin/app-map/` into the repo root and follow its
-[`INSTALL.md`](dropin/app-map/INSTALL.md) — register the skill, optionally
-install the drift-detection pre-commit hook. The committed `bin/appmap` is a
-universal macOS binary; nothing to build.
+Download the latest release from the
+[Releases page](https://github.com/Dfowj/app-map/releases/latest)
+and follow the included `INSTALL.md` — register the skill, optionally install
+the drift-detection pre-commit hook. The `bin/appmap` binary is a universal
+macOS binary; nothing to build.
 
 ## How it stays trustworthy
 
@@ -46,9 +58,12 @@ universal macOS binary; nothing to build.
 
 | Path | What |
 |---|---|
-| `dropin/app-map/` | The distributable: skill, schema, CLI binary, hook |
 | `cli/` | SwiftPM source for `appmap` (`swift test` runs the suite) |
 | `schema/surface.schema.json` | Canonical record contract |
+| `skill/SKILL.md` | The agent skill |
+| `install/` | Files that ship only in the dropin (INSTALL.md, hooks) |
+| `script/assemble-dropin.sh` | Assembles the release tarball from canonical sources |
+| `.github/workflows/release.yml` | Tag-triggered release + GitHub Pages deploy |
 | `samples/shopmini/` | SwiftUI sample app + gold records (end-to-end eval) |
 | `plans/` | Development plan and change history |
 | `previous-iteration/` | Frozen first pass (Python engine) — reference only |

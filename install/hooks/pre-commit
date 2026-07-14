@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# App Map pre-commit shim — warn, record, never block.
+#
+# Calls `appmap stamp`, which re-stamps last_verified on staged records, flags
+# surfaces whose code_anchor.file or watches entries changed without their
+# record (needs_review), patches manifest.yaml, and stages what it modified.
+# Nothing here can fail a commit: every path exits 0.
+#
+# Install (from the repo root):
+#   ln -sf ../../app-map/hooks/pre-commit .git/hooks/pre-commit
+# If app-map/ lives below the repo root, adjust the appmap path accordingly.
+
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+appmap="$root/app-map/bin/appmap"
+[ -x "$appmap" ] || exit 0
+"$appmap" stamp || true
+exit 0
